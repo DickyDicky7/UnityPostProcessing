@@ -69,15 +69,15 @@
 
                 var edgeDesc = desc;
 //              var edgeDesc = desc;
-                edgeDesc.colorFormat = RenderTextureFormat.RG8;
-//              edgeDesc.colorFormat = RenderTextureFormat.RG8;
+                edgeDesc.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8_UNorm;
+//              edgeDesc.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8_UNorm;
                 RenderingUtils.ReAllocateIfNeeded(ref m_EdgeTexture, edgeDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_EdgeTexture");
 //              RenderingUtils.ReAllocateIfNeeded(ref m_EdgeTexture, edgeDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_EdgeTexture");
 
                 var weightDesc = desc;
 //              var weightDesc = desc;
-                weightDesc.colorFormat = RenderTextureFormat.ARGB32;
-//              weightDesc.colorFormat = RenderTextureFormat.ARGB32;
+                weightDesc.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
+//              weightDesc.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
                 RenderingUtils.ReAllocateIfNeeded(ref m_WeightTexture, weightDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_WeightTexture");
 //              RenderingUtils.ReAllocateIfNeeded(ref m_WeightTexture, weightDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_WeightTexture");
 
