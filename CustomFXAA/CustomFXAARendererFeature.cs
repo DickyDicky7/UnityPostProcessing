@@ -20,8 +20,8 @@
             private RTHandle m_TempTexture;
 //          private RTHandle m_TempTexture;
 
-            // ADDED: Profiling sampler for the Frame Debugger
-//          // ADDED: Profiling sampler for the Frame Debugger
+            // Define a profiling sampler for the Frame Debugger.
+//          // Define a profiling sampler for the Frame Debugger.
             private ProfilingSampler m_ProfilingSampler = new ProfilingSampler("Custom FXAA");
 //          private ProfilingSampler m_ProfilingSampler = new ProfilingSampler("Custom FXAA");
 
@@ -31,10 +31,15 @@
 //          {
                 m_Material = material;
 //              m_Material = material;
-                // FIXED: FXAA must run after Tonemapping so it operates on 0-1 LDR color space!
-//              // FIXED: FXAA must run after Tonemapping so it operates on 0-1 LDR color space!
+                // FXAA must run after tonemapping to operate within the 0-1 LDR color space.
+//              // FXAA must run after tonemapping to operate within the 0-1 LDR color space.
                 renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 //              renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+
+                // Ensure URP provides the color target to read from.
+//              // Ensure URP provides the color target to read from.
+                ConfigureInput(ScriptableRenderPassInput.Color);
+//              ConfigureInput(ScriptableRenderPassInput.Color);
             }
 //          }
 
@@ -44,8 +49,14 @@
 //          {
                 var desc = renderingData.cameraData.cameraTargetDescriptor;
 //              var desc = renderingData.cameraData.cameraTargetDescriptor;
-                desc.depthBufferBits = 0; // Good: saves memory
-//              desc.depthBufferBits = 0; // Good: saves memory
+                desc.depthBufferBits = 0; // Set depth to 0 to conserve memory.
+//              desc.depthBufferBits = 0; // Set depth to 0 to conserve memory.
+
+                // Force MSAA to 1, as post-processing must run on resolved targets.
+//              // Force MSAA to 1, as post-processing must run on resolved targets.
+                desc.msaaSamples = 1;
+//              desc.msaaSamples = 1;
+
                 RenderingUtils.ReAllocateIfNeeded(ref m_TempTexture, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_TempFXAATexture");
 //              RenderingUtils.ReAllocateIfNeeded(ref m_TempTexture, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_TempFXAATexture");
             }
@@ -77,20 +88,20 @@
 //              }
                 CommandBuffer cmd = CommandBufferPool.Get();
 //              CommandBuffer cmd = CommandBufferPool.Get();
-                // ADDED: Wrap in ProfilingScope so it shows up named in the Frame Debugger
-//              // ADDED: Wrap in ProfilingScope so it shows up named in the Frame Debugger
+                // Wrap the execution in a ProfilingScope so it appears named in the Frame Debugger.
+//              // Wrap the execution in a ProfilingScope so it appears named in the Frame Debugger.
                 using (new ProfilingScope(cmd, m_ProfilingSampler))
 //              using (new ProfilingScope(cmd, m_ProfilingSampler))
                 {
 //              {
-                    // Fetch the camera color target here during execution!
-//                  // Fetch the camera color target here during execution!
+                    // Fetch the camera's color target during execution.
+//                  // Fetch the camera's color target during execution.
                     RTHandle cameraColorTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
 //                  RTHandle cameraColorTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
-                    // Execute blit logic
-//                  // Execute blit logic
-                    // Note: Blitter automatically sets your shader's _BlitTexture and _BlitTexture_TexelSize!
-//                  // Note: Blitter automatically sets your shader's _BlitTexture and _BlitTexture_TexelSize!
+                    // Execute the blit logic.
+//                  // Execute the blit logic.
+                    // Note: The Blitter automatically sets the shader's _BlitTexture and _BlitTexture_TexelSize properties.
+//                  // Note: The Blitter automatically sets the shader's _BlitTexture and _BlitTexture_TexelSize properties.
                     Blitter.BlitCameraTexture(cmd, cameraColorTarget, m_TempTexture, m_Material, 0);
 //                  Blitter.BlitCameraTexture(cmd, cameraColorTarget, m_TempTexture, m_Material, 0);
                     Blitter.BlitCameraTexture(cmd, m_TempTexture, cameraColorTarget);
@@ -99,8 +110,8 @@
 //              }
                 context.ExecuteCommandBuffer(cmd);
 //              context.ExecuteCommandBuffer(cmd);
-                cmd.Clear(); // Good practice to clear before releasing
-//              cmd.Clear(); // Good practice to clear before releasing
+                cmd.Clear(); // It is good practice to clear the command buffer before releasing it.
+//              cmd.Clear(); // It is good practice to clear the command buffer before releasing it.
                 CommandBufferPool.Release(cmd);
 //              CommandBufferPool.Release(cmd);
             }
@@ -153,6 +164,7 @@
 //              return;
             }
 //          }
+
             m_Material = CoreUtils.CreateEngineMaterial(settings.shader);
 //          m_Material = CoreUtils.CreateEngineMaterial(settings.shader);
             m_Pass = new CustomFXAARenderPass(m_Material);
@@ -172,8 +184,20 @@
 //              return;
             }
 //          }
-            // Good: Don't run this on reflection probes or material previews
-//          // Good: Don't run this on reflection probes or material previews
+
+            // Respect the camera's post-processing toggle.
+//          // Respect the camera's post-processing toggle.
+            if (!renderingData.cameraData.postProcessEnabled)
+//          if (!renderingData.cameraData.postProcessEnabled)
+            {
+//          {
+                return;
+//              return;
+            }
+//          }
+
+            // Skip execution for reflection probes and material previews.
+//          // Skip execution for reflection probes and material previews.
             if (renderingData.cameraData.cameraType == CameraType.Preview || renderingData.cameraData.cameraType == CameraType.Reflection)
 //          if (renderingData.cameraData.cameraType == CameraType.Preview || renderingData.cameraData.cameraType == CameraType.Reflection)
             {

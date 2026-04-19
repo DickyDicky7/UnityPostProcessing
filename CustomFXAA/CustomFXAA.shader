@@ -29,8 +29,8 @@
                 #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 //              #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-                // ADDED: Explicitly declare the texel size variable so Unity can populate it.
-//              // ADDED: Explicitly declare the texel size variable so Unity can populate it.
+                // Explicitly declare the texel size variable so Unity can automatically populate it.
+//              // Explicitly declare the texel size variable so Unity can automatically populate it.
                 float4 _BlitTexture_TexelSize;
 //              float4 _BlitTexture_TexelSize;
 
@@ -53,8 +53,8 @@
                     float2 uv = input.texcoord;
 //                  float2 uv = input.texcoord;
 
-                    // Now this will correctly reference the declared variable above
-//                  // Now this will correctly reference the declared variable above
+                    // Reference the explicitly declared texel size variable above.
+//                  // Reference the explicitly declared texel size variable above.
                     float4 texelSize = _BlitTexture_TexelSize;
 //                  float4 texelSize = _BlitTexture_TexelSize;
                     float2 texCoordOffset = texelSize.xy;
