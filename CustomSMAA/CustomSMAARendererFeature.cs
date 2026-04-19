@@ -39,6 +39,11 @@
 //              m_Settings = settings;
                 renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 //              renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+
+                // Ensure URP provides the color target to read from.
+//              // Ensure URP provides the color target to read from.
+                ConfigureInput(ScriptableRenderPassInput.Color);
+//              ConfigureInput(ScriptableRenderPassInput.Color);
             }
 //          }
 
@@ -52,6 +57,11 @@
 //              // SMAA does not require depth here, which saves memory.
                 desc.depthBufferBits = 0;
 //              desc.depthBufferBits = 0;
+
+                // Force MSAA to 1, as post-processing must run on resolved targets.
+//              // Force MSAA to 1, as post-processing must run on resolved targets.
+                desc.msaaSamples = 1;
+//              desc.msaaSamples = 1;
 
                 // We use the default descriptor for intermediate textures (usually the standard color format).
 //              // We use the default descriptor for intermediate textures (usually the standard color format).
@@ -251,6 +261,17 @@
 //      {
             if (settings.shader == null || m_Material == null)
 //          if (settings.shader == null || m_Material == null)
+            {
+//          {
+                return;
+//              return;
+            }
+//          }
+
+            // Respect the camera's post-processing toggle.
+//          // Respect the camera's post-processing toggle.
+            if (!renderingData.cameraData.postProcessEnabled)
+//          if (!renderingData.cameraData.postProcessEnabled)
             {
 //          {
                 return;

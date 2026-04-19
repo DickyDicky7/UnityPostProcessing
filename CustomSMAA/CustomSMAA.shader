@@ -18,10 +18,36 @@
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 //          #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            // SMAA requires us to define SMAA_HLSL_4_1.
-//          // SMAA requires us to define SMAA_HLSL_4_1.
-            #define SMAA_HLSL_4_1
-//          #define SMAA_HLSL_4_1
+            // SMAA Custom SL port for Unity URP
+//          // SMAA Custom SL port for Unity URP
+            #define SMAA_CUSTOM_SL
+//          #define SMAA_CUSTOM_SL
+            #define SMAATexture2D(tex) Texture2D tex
+//          #define SMAATexture2D(tex) Texture2D tex
+            #define SMAATexturePass2D(tex) tex
+//          #define SMAATexturePass2D(tex) tex
+            #define SMAASampleLevelZero(tex, coord) tex.SampleLevel(sampler_LinearClamp, coord, 0)
+//          #define SMAASampleLevelZero(tex, coord) tex.SampleLevel(sampler_LinearClamp, coord, 0)
+            #define SMAASampleLevelZeroPoint(tex, coord) tex.SampleLevel(sampler_PointClamp, coord, 0)
+//          #define SMAASampleLevelZeroPoint(tex, coord) tex.SampleLevel(sampler_PointClamp, coord, 0)
+            #define SMAASampleLevelZeroOffset(tex, coord, offset) tex.SampleLevel(sampler_LinearClamp, coord, 0, offset)
+//          #define SMAASampleLevelZeroOffset(tex, coord, offset) tex.SampleLevel(sampler_LinearClamp, coord, 0, offset)
+            #define SMAASample(tex, coord) tex.Sample(sampler_LinearClamp, coord)
+//          #define SMAASample(tex, coord) tex.Sample(sampler_LinearClamp, coord)
+            #define SMAASamplePoint(tex, coord) tex.Sample(sampler_PointClamp, coord)
+//          #define SMAASamplePoint(tex, coord) tex.Sample(sampler_PointClamp, coord)
+            #define SMAASampleOffset(tex, coord, offset) tex.Sample(sampler_LinearClamp, coord, offset)
+//          #define SMAASampleOffset(tex, coord, offset) tex.Sample(sampler_LinearClamp, coord, offset)
+            #define SMAA_FLATTEN [flatten]
+//          #define SMAA_FLATTEN [flatten]
+            #define SMAA_BRANCH [branch]
+//          #define SMAA_BRANCH [branch]
+            #define SMAATexture2DMS2(tex) Texture2DMS<float4, 2> tex
+//          #define SMAATexture2DMS2(tex) Texture2DMS<float4, 2> tex
+            #define SMAALoad(tex, pos, sample) tex.Load(pos, sample)
+//          #define SMAALoad(tex, pos, sample) tex.Load(pos, sample)
+            #define SMAAGather(tex, coord) tex.Gather(sampler_LinearClamp, coord, 0)
+//          #define SMAAGather(tex, coord) tex.Gather(sampler_LinearClamp, coord, 0)
 
             // Let Unity automatically handle the _BlitTexture texel size.
 //          // Let Unity automatically handle the _BlitTexture texel size.
