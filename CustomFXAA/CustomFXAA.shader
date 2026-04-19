@@ -17,7 +17,7 @@
 //          {
                 Name "CustomFXAA"
 //              Name "CustomFXAA"
-                
+
                 HLSLPROGRAM
 //              HLSLPROGRAM
                 #pragma vertex Vert
@@ -52,11 +52,11 @@
 
                     float2 uv = input.texcoord;
 //                  float2 uv = input.texcoord;
-                
+
                     // Now this will correctly reference the declared variable above
 //                  // Now this will correctly reference the declared variable above
-                    float4 texelSize = _BlitTexture_TexelSize; 
-//                  float4 texelSize = _BlitTexture_TexelSize; 
+                    float4 texelSize = _BlitTexture_TexelSize;
+//                  float4 texelSize = _BlitTexture_TexelSize;
                     float2 texCoordOffset = texelSize.xy;
 //                  float2 texCoordOffset = texelSize.xy;
 

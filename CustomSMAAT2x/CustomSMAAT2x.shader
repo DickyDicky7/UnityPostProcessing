@@ -1,5 +1,5 @@
-    Shader "Hidden/CustomSMAA1x"
-//  Shader "Hidden/CustomSMAA1x"
+    Shader "Hidden/CustomSMAAT2x"
+//  Shader "Hidden/CustomSMAAT2x"
     {
 //  {
         Properties
@@ -12,6 +12,8 @@
 //          _AreaTex ("Area Texture", 2D) = "white" {}
             _SearchTex ("Search Texture", 2D) = "white" {}
 //          _SearchTex ("Search Texture", 2D) = "white" {}
+            _HistoryTex ("History Texture", 2D) = "black" {}
+//          _HistoryTex ("History Texture", 2D) = "black" {}
         }
 //      }
 
@@ -28,6 +30,8 @@
 //          HLSLINCLUDE
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 //          #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+//          #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 //          #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
@@ -43,11 +47,21 @@
 //          TEXTURE2D(_SearchTex);
             SAMPLER(sampler_SearchTex);
 //          SAMPLER(sampler_SearchTex);
+            TEXTURE2D(_HistoryTex);
+//          TEXTURE2D(_HistoryTex);
+            SAMPLER(sampler_HistoryTex);
+//          SAMPLER(sampler_HistoryTex);
+            TEXTURE2D(_MotionVectorTexture);
+//          TEXTURE2D(_MotionVectorTexture);
+            SAMPLER(sampler_MotionVectorTexture);
+//          SAMPLER(sampler_MotionVectorTexture);
 
             float _SMAAThreshold;
 //          float _SMAAThreshold;
             float4 _BlitTexture_TexelSize;
 //          float4 _BlitTexture_TexelSize;
+            float _TemporalBlendWeight;
+//          float _TemporalBlendWeight;
 
             float GetLuma(float3 color)
 //          float GetLuma(float3 color)
@@ -139,8 +153,6 @@
 //                  if (edge.x > 0 || edge.y > 0)
                     {
 //                  {
-                        // Simplified: just use a fixed weight if edge detected
-//                      // Simplified: just use a fixed weight if edge detected
                         weights = float4(edge.x, edge.x, edge.y, edge.y) * 0.5;
 //                      weights = float4(edge.x, edge.x, edge.y, edge.y) * 0.5;
                     }
@@ -206,6 +218,97 @@
 
                     return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
 //                  return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                }
+//              }
+                ENDHLSL
+//              ENDHLSL
+            }
+//          }
+
+            // Pass 3: Temporal Resolve
+//          // Pass 3: Temporal Resolve
+            Pass
+//          Pass
+            {
+//          {
+                Name "SMAA_TemporalResolve"
+//              Name "SMAA_TemporalResolve"
+
+                HLSLPROGRAM
+//              HLSLPROGRAM
+                #pragma vertex Vert
+//              #pragma vertex Vert
+                #pragma fragment frag
+//              #pragma fragment frag
+
+                float4 frag (Varyings input) : SV_Target
+//              float4 frag (Varyings input) : SV_Target
+                {
+//              {
+                    float2 uv = input.texcoord;
+//                  float2 uv = input.texcoord;
+                    float2 motionVec = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_MotionVectorTexture, uv).xy;
+//                  float2 motionVec = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_MotionVectorTexture, uv).xy;
+
+                    float2 historyUV = uv - motionVec;
+//                  float2 historyUV = uv - motionVec;
+
+                    float4 currentColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+//                  float4 currentColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                    float4 historyColor = SAMPLE_TEXTURE2D_X(_HistoryTex, sampler_HistoryTex, historyUV);
+//                  float4 historyColor = SAMPLE_TEXTURE2D_X(_HistoryTex, sampler_HistoryTex, historyUV);
+
+                    float2 texelSize = _BlitTexture_TexelSize.xy;
+//                  float2 texelSize = _BlitTexture_TexelSize.xy;
+                    float4 c0 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(-1, 0) * texelSize);
+//                  float4 c0 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(-1, 0) * texelSize);
+                    float4 c1 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(1, 0) * texelSize);
+//                  float4 c1 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(1, 0) * texelSize);
+                    float4 c2 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(0, -1) * texelSize);
+//                  float4 c2 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(0, -1) * texelSize);
+                    float4 c3 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(0, 1) * texelSize);
+//                  float4 c3 = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(0, 1) * texelSize);
+
+                    float4 minColor = currentColor;
+//                  float4 minColor = currentColor;
+                    float4 maxColor = currentColor;
+//                  float4 maxColor = currentColor;
+                    float4 neighbors[4] = { c0, c1, c2, c3 };
+//                  float4 neighbors[4] = { c0, c1, c2, c3 };
+
+                    UNITY_UNROLL
+//                  UNITY_UNROLL
+                    for (int i = 0; i < 4; i++)
+//                  for (int i = 0; i < 4; i++)
+                    {
+//                  {
+                        minColor = min(minColor, neighbors[i]);
+//                      minColor = min(minColor, neighbors[i]);
+                        maxColor = max(maxColor, neighbors[i]);
+//                      maxColor = max(maxColor, neighbors[i]);
+                    }
+//                  }
+                    historyColor = clamp(historyColor, minColor, maxColor);
+//                  historyColor = clamp(historyColor, minColor, maxColor);
+
+                    float outOfBounds = 0.0;
+//                  float outOfBounds = 0.0;
+
+                    UNITY_FLATTEN
+//                  UNITY_FLATTEN
+                    if (historyUV.x < 0.0 || historyUV.x > 1.0 || historyUV.y < 0.0 || historyUV.y > 1.0)
+//                  if (historyUV.x < 0.0 || historyUV.x > 1.0 || historyUV.y < 0.0 || historyUV.y > 1.0)
+                    {
+//                  {
+                        outOfBounds = 1.0;
+//                      outOfBounds = 1.0;
+                    }
+//                  }
+                    float weight = lerp(_TemporalBlendWeight, 0.0, outOfBounds);
+//                  float weight = lerp(_TemporalBlendWeight, 0.0, outOfBounds);
+
+                    return lerp(currentColor, historyColor, weight);
+//                  return lerp(currentColor, historyColor, weight);
                 }
 //              }
                 ENDHLSL
